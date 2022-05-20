@@ -60,7 +60,7 @@ map =          [["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
                 ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"]]
 # player movement
 current_block_list = []
-currently_has_block = True
+currently_has_block = False
 move_x_axis = 0
 move_x_offset = 0
 # visuals
@@ -71,6 +71,7 @@ current_tick = 0
 
 start = 0
 
+collision = False
 
 
 def move(moving_block_list, map, move_x_axis):
@@ -99,16 +100,22 @@ def move(moving_block_list, map, move_x_axis):
 			map[block_coordinates[1]][block_coordinates[0]] = "0"
 		moving_block_list.remove(block_coordinates) # remove item from list
 
-map[0][3] = "#"
-y = 0
-for row in map:
-	x = 0
-	for block in row:
+def update_map(map, current_block_list):
+	# clear map
+	for y in range(len(map)):
+		for x in range(len(map[y])):
+			if map[y][x] == "#":
+				map[y][x] = "0"
 
-		if block == "#":
-			current_block_list.append([x,y])
-		x +=1
-	y+=1
+
+	# set map
+	if currently_has_block:
+
+		for i in range(len(current_block_list)):
+			current_block_list[i] = [current_block_list[i][0], current_block_list[i][1]]
+			map[current_block_list[i][1]][current_block_list[i][0]] = "#"
+
+
 def debug():
 
 	with open('readme.txt', 'w') as f:
@@ -122,8 +129,12 @@ while not done:
 	#---- Start runs the first frame
 	#print(move_x_axis)
 	# set initial blocks
-	if currently_has_block == False:
-		map[0][3] = "#"
+	if currently_has_block == False: # generate new block
+		current_block_list = []
+		current_block_list.append([0, 2])
+		current_block_list.append([0,0])
+		current_block_list.append([0, 1])
+
 		currently_has_block = True
 
 	# --- Main event loop
@@ -155,39 +166,42 @@ while not done:
 
 		#print("tick reached")
 		current_tick = 0
-		y = len(map) - 1 # 18
-		#print(y)
-		while y >= 0:
-			x = len(map[0]) - 1
-			while x >= 0:
-				block_above = map[y - 1][x]
-				current_position = map[y][x]
-				if map[y - 1][x] == "#": # Block above current position is a falling block
-					#print('x:',x)
-					#print('move_offset',move_offset)
-					current_block_list = []
-					current_block_list.append([x, y])
-					print(current_block_list)
-					if map[y][x] == "P":
-						map[y - 1][x] = "P"
-						currently_has_block = False
-						#print("Block landed on P")
-					elif y == len(map)-1: # check if row below is out of range, then place block
-						map[y - 1][x] = "0"
-						map[y][x] = "P"
-						currently_has_block = False
 
-					else : # move block above to current position
+		# COLLISION DETECTION----------------------------------
 
-						map[y][x] = "#"  # set current position to block
-						map[y - 1][x] = "0" # set block above to empty
+		for block_coord in current_block_list: # check all collisions (placed block/hit bottom of screen)
 
 
+			if block_coord[1] == len(map) - 1: # is working
+				collision = True
+				print("bottom of screen collision", collision)
+				print("Hit bottom of screen")
+				break
+			elif map[block_coord[1] + 1][block_coord[0]] == "P": # check if any blocks in the tetris block is going to touch a placed block
+				collision = True
+				print("Hit another block")
+				break
 
-				if block == "0":
-					pass
-				x -= 1
-			y -= 1
+
+		# CHANGE BLOCK COORDS BASED ON COLLISION--------------------
+		if collision:
+			# CONVERT PLAYERS CURRENT BLOCK TO "PLACED"
+			for i in range(len(current_block_list)):
+
+
+				map[current_block_list[i][1]][current_block_list[i][0]] = "P"
+				print(map[current_block_list[i][1]][current_block_list[i][0]])
+			collision = False
+			currently_has_block = False
+			current_block_list = []
+		# MOVE PLAYER BLOCKS DOWN SINCE NO COLLISION IS DETECTED
+		else:
+			# add gravity by adding +1 to every Y coordinate in current_block_list
+			for i in range(len(current_block_list)):
+				current_block_list[i] = [current_block_list[i][0], current_block_list[i][1] + 1]
+				map[current_block_list[i][1]][current_block_list[i][0]] = "#"
+	# update map list
+	update_map(map, current_block_list)
 
 
 
@@ -227,8 +241,7 @@ while not done:
 
 	# --- Go ahead and update the screen with what we've drawn.
 	pygame.display.flip()
-	if start == 0:
-		start += 1
+
 	# --- Limit to 60 frames per second
 	clock.tick(FPS)
 
