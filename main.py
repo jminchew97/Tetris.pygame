@@ -75,31 +75,19 @@ collision = False
 
 
 def move(moving_block_list, map, move_x_axis):
-	x = 0
-	for block_coordinates in moving_block_list:
-		if move_x_axis < 0: # player trying to move left
-			if block_coordinates[0] > 0 and map[block_coordinates[1]][block_coordinates[0] - 1] != "P": # if block to left not out of screen or == to P
-				print("can move left")
+	for i in range(len(moving_block_list)):
+		x = current_block_list[i][0]
+		y = current_block_list[i][1]
+		if (move_x_axis <0 and x==0) or (move_x_axis >0 and x == 9): # the space the player is trying to move to is within range
+			print(current_block_list)
+			return
+			if map[y][x + move_x_axis] == "P":
+				print(x)
+				return
 
-			else:
-				print("CANT move left")
-				return 0
-		if move_x_axis > 0:  # player trying to move right
-			if block_coordinates[0] < len(map[0]) - 1 and map[block_coordinates[1]][
-				block_coordinates[0] - 1] != "P":  # if block to left not out of screen or == to P
-				print("can move left")
-			else:
-				print("CANT move right")
-				return 0
-	for block_coordinates in moving_block_list:
-		if move_x_axis < 0:  # player trying to move left
-			map[block_coordinates[1]][block_coordinates[0] - 1] = "#" # move block to left
-			map[block_coordinates[1]][block_coordinates[0]] = "0"
-		elif move_x_axis > 0:  # player trying to move right
-			map[block_coordinates[1]][block_coordinates[0] + 1] = "#"  # move block to left
-			map[block_coordinates[1]][block_coordinates[0]] = "0"
-		moving_block_list.remove(block_coordinates) # remove item from list
-
+	for i in range(len(moving_block_list)):
+		moving_block_list[i] = [moving_block_list[i][0] + move_x_axis, moving_block_list[i][1]]
+	print(current_block_list)
 def update_map(map, current_block_list):
 	# clear map
 	for y in range(len(map)):
@@ -140,6 +128,7 @@ while not done:
 	# --- Main event loop
 	dt = clock.tick(FPS) / 1000
 
+	# Reset input
 	move_x_axis = 0
 	# INPUT---------------------------
 	for event in pygame.event.get():
