@@ -1,17 +1,4 @@
-"""
- Pygame base template for opening a window
-
- Sample Python/Pygame Programs
- Simpson College Computer Science
- http://programarcadegames.com/
- http://simpson.edu/computer-science/
-
- Explanation video: http://youtu.be/vRB_983kUMc
-"""
-
 import pygame
-
-
 
 # Define some colors
 BLACK = (0, 0, 0)
@@ -38,26 +25,10 @@ done = False
 # Used to manage how fast the screen updates
 clock = pygame.time.Clock()
 
-map =          [["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
-                ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"]]
+# Map info
+map_x_length = 10
+map_y_length = 20
+
 # player movement
 current_block_list = []
 currently_has_block = False
@@ -73,7 +44,14 @@ start = 0
 
 collision = False
 
+def create_map_grid(map_x, map_y):
+	map = []
+	for y in range(map_y_length):
 
+		map.append([])
+		for x in range(map_x_length):
+			map[y].append("0")
+	return map
 def move(moving_block_list, map, move_x_axis):
 	for i in range(len(moving_block_list)):
 		x = current_block_list[i][0]
@@ -81,9 +59,9 @@ def move(moving_block_list, map, move_x_axis):
 		if (move_x_axis <0 and x==0) or (move_x_axis >0 and x == 9): # the space the player is trying to move to is within range
 			print(current_block_list)
 			return
-			if map[y][x + move_x_axis] == "P":
-				print(x)
-				return
+		if map[y][x + move_x_axis] == "P":
+			print(x)
+			return
 
 	for i in range(len(moving_block_list)):
 		moving_block_list[i] = [moving_block_list[i][0] + move_x_axis, moving_block_list[i][1]]
@@ -113,6 +91,7 @@ def debug():
 			f.write("\n")
 		f.write("Move X Axis:" + str(move_x_axis))
 # -------- Main Program Loop -----------
+map = create_map_grid(map_x_length, map_y_length)
 while not done:
 	#---- Start runs the first frame
 	#print(move_x_axis)
