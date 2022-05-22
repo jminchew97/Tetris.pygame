@@ -1,4 +1,5 @@
 import pygame
+import random
 
 # Define some colors
 BLACK = (0, 0, 0)
@@ -36,14 +37,23 @@ move_x_axis = 0
 move_x_offset = 0
 # visuals
 
-moving_tick =  5
+normal_tick =  5
+fast_tick = 2
+tick = normal_tick
+
 game_speed = 20
 current_tick = 0
 
 start = 0
 
 collision = False
+# pieces
+pieces = ["OR", "HR", "BR", "TW", "CZ", "SB", "RZ"]
+current_piece = ""
+is_first_piece = True
+rand = 0
 
+pushing_down = False
 def create_map_grid(map_x, map_y):
 	map = []
 	for y in range(map_y_length):
@@ -52,20 +62,71 @@ def create_map_grid(map_x, map_y):
 		for x in range(map_x_length):
 			map[y].append("0")
 	return map
+
+
 def move(moving_block_list, map, move_x_axis):
 	for i in range(len(moving_block_list)):
 		x = current_block_list[i][0]
 		y = current_block_list[i][1]
 		if (move_x_axis <0 and x==0) or (move_x_axis >0 and x == 9): # the space the player is trying to move to is within range
-			print(current_block_list)
+
 			return
 		if map[y][x + move_x_axis] == "P":
-			print(x)
+
 			return
 
 	for i in range(len(moving_block_list)):
 		moving_block_list[i] = [moving_block_list[i][0] + move_x_axis, moving_block_list[i][1]]
-	print(current_block_list)
+
+
+def generate_piece(piece_list, current_piece):
+
+	current_p = ""
+	rand = random.randint(0, 6)
+	current_block_list = []
+	normal_rotation = False
+	hero_rotation = False
+	smash_rotation = False
+	while piece_list[rand] == current_piece:
+		rand = random.randint(0, 6)
+
+	if piece_list[rand] == "OR":
+		current_block_list.append([4, 0])
+		current_block_list.append([5, 0])
+		current_block_list.append([3, 0])
+		current_block_list.append([3, 1])
+	elif piece_list[rand] == "BR":
+		current_block_list.append([4, 0])
+		current_block_list.append([5, 0])
+		current_block_list.append([3, 0])
+		current_block_list.append([5, 1])
+	elif piece_list[rand] == "RZ":
+		current_block_list.append([4, 0])
+		current_block_list.append([5, 0])
+		current_block_list.append([4, 1])
+		current_block_list.append([3, 1])
+	elif piece_list[rand] == "CZ":
+		current_block_list.append([4, 0])
+		current_block_list.append([3, 0])
+		current_block_list.append([4, 1])
+		current_block_list.append([5, 1])
+	elif piece_list[rand] == "HR":
+		current_block_list.append([4, 0])
+		current_block_list.append([3, 0])
+		current_block_list.append([5, 0])
+		current_block_list.append([6, 0])
+	elif piece_list[rand] == "SB":
+		current_block_list.append([4, 0])
+		current_block_list.append([5, 0])
+		current_block_list.append([4, 1])
+		current_block_list.append([5, 1])
+	elif piece_list[rand] == "TW":
+		current_block_list.append([4, 0])
+		current_block_list.append([4, 1])
+		current_block_list.append([3, 1])
+		current_block_list.append([5, 1])
+	print(rand)
+	return current_block_list, piece_list[rand]
 def update_map(map, current_block_list):
 	# clear map
 	for y in range(len(map)):
@@ -82,6 +143,11 @@ def update_map(map, current_block_list):
 			map[current_block_list[i][1]][current_block_list[i][0]] = "#"
 
 
+
+def rotate_piece():
+	pass
+
+
 def debug():
 
 	with open('readme.txt', 'w') as f:
@@ -90,6 +156,8 @@ def debug():
 				f.write(" " + block + " ")
 			f.write("\n")
 		f.write("Move X Axis:" + str(move_x_axis))
+
+
 # -------- Main Program Loop -----------
 map = create_map_grid(map_x_length, map_y_length)
 while not done:
@@ -97,10 +165,8 @@ while not done:
 	#print(move_x_axis)
 	# set initial blocks
 	if currently_has_block == False: # generate new block
-		current_block_list = []
-		current_block_list.append([0, 2])
-		current_block_list.append([0,0])
-		current_block_list.append([0, 1])
+
+		current_block_list, current_piece = generate_piece(pieces, current_piece)
 
 		currently_has_block = True
 
@@ -122,14 +188,22 @@ while not done:
 				#print("left")
 			if event.key == pygame.K_SPACE:
 				debug()
+			if event.key == pygame.K_DOWN:
+				pushing_down = True
+				tick = fast_tick
+		if event.type == pygame.KEYUP:
+			if event.key == pygame.K_DOWN:
+				tick = normal_tick
+				pushing_down = False
 	# check if a move was attempted --------------------
 	if move_x_axis != 0:
 		# if move attempted, detect collisions to specified side
 		move(current_block_list, map,move_x_axis)
 
 	# --- Game logic should go here
+
 	# move blocks DOWN
-	if current_tick >= moving_tick:
+	if current_tick >= tick:
 
 
 		#print("tick reached")
@@ -142,12 +216,11 @@ while not done:
 
 			if block_coord[1] == len(map) - 1: # is working
 				collision = True
-				print("bottom of screen collision", collision)
-				print("Hit bottom of screen")
+
 				break
 			elif map[block_coord[1] + 1][block_coord[0]] == "P": # check if any blocks in the tetris block is going to touch a placed block
 				collision = True
-				print("Hit another block")
+
 				break
 
 
@@ -158,7 +231,7 @@ while not done:
 
 
 				map[current_block_list[i][1]][current_block_list[i][0]] = "P"
-				print(map[current_block_list[i][1]][current_block_list[i][0]])
+
 			collision = False
 			currently_has_block = False
 			current_block_list = []
