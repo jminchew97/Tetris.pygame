@@ -31,14 +31,24 @@ map_x_length = 10
 map_y_length = 20
 
 # player movement
+block1 = []
+block2 = []
+block3 = []
+block4 = []
+block5 = []
+block6 = []
+block7 = []
+
+update_placed_blocks = False
 current_block_list = []
+
 currently_has_block = False
 move_x_axis = 0
 move_x_offset = 0
 # visuals
 
 normal_tick =  5
-fast_tick = 2
+fast_tick = 1
 tick = normal_tick
 
 game_speed = 20
@@ -55,6 +65,7 @@ rand = 0
 
 hero_iteration = 0
 pushing_down = False
+
 def create_map_grid(map_x, map_y):
 	map = []
 	for y in range(map_y_length):
@@ -229,11 +240,76 @@ def rotate_piece(current_piece):
 			hero_iteration = 0
 
 		current_block_list = templist
+
+def check_for_tetris():
+
+	clear_y_axis = []
+	lines_cleared = 0
+	global current_block_list
+	global block1
+	global update_placed_blocks
+	has_cleared_lines = False
+	for i in range(len(current_block_list)):
+		counter = 0
+		# get current block y coordinate
+		y = current_block_list[i][1]
+		# count every placed block "P" on each Y axis the current block affects
+		for x in range(map_x_length):
+
+			if map[y][x] == "P":
+				counter += 1
+
+			else:
+				break
+		# check if placed blocks equals map length
+		if counter == map_x_length:
+			lines_cleared += 1
+			has_cleared_lines = True
+			update_placed_blocks = True
+			if not y in clear_y_axis:
+
+				clear_y_axis.append(y)
+
+
+	if has_cleared_lines:
+
+		print(lines_cleared)
+		 # all y axis that were cleared, stored as ints
+		new_placed_list = []
+
+		# get rid of any y axis duplicated in new list
+		for i in range(len(block1)):
+			if block1[i][1] in clear_y_axis:
+				print("Duplicate")
+			else:
+				new_placed_list.append(block1[i]) # add blocks that are remaining after clearing to a new list
+		block1 = new_placed_list # reset block list to the new list
+
+
+		# sort cleared y list from lowest ( top of map to bottom)
+		clear_y_axis.sort()
+		# for every y axis in list
+		for y in clear_y_axis:
+
+		# move all blocks above current y cleared, down
+			for i in range(len(block1)):
+				if block1[i][1]  < y:
+					block1[i][1] += 1
+
+		#for i in range(len(block1)): # moving all coordinates to correct spots after tetris
+
+		#	block1[i][1] = block1[i][1] + 1
+
+
+		#
+
+
 def update_map(map, current_block_list):
+	global update_placed_blocks
 	# clear map
 	for y in range(len(map)):
 		for x in range(len(map[y])):
-			if map[y][x] == "#":
+			if map[y][x] != "0":
 				map[y][x] = "0"
 
 
@@ -244,6 +320,11 @@ def update_map(map, current_block_list):
 
 			map[current_block_list[i][1]] [current_block_list[i][0]] = "#"
 
+	#update placed blocks
+	for i in range(len(block1)):
+		map[block1[i][1]][block1[i][0]] = "P"
+
+	update_placed_blocks = False
 
 def debug():
 
@@ -332,10 +413,14 @@ while not done:
 
 
 				map[current_block_list[i][1]][current_block_list[i][0]] = "P"
-
+				block1.append([current_block_list[i][0] ,current_block_list[i][1] ])
 			collision = False
 			currently_has_block = False
+
+			check_for_tetris()
+
 			current_block_list = []
+
 		# MOVE PLAYER BLOCKS DOWN SINCE NO COLLISION IS DETECTED
 		else:
 			# add gravity by adding +1 to every Y coordinate in current_block_list
@@ -360,25 +445,11 @@ while not done:
 	# --- Drawing code should go here
 
 	#  ---Draw blocks onto screen
-	y2 =0
-	for row in map:
-		x2 = 0
-		for block in row:
-			if block == "#":
 
-				pygame.draw.rect(screen, GREEN, pygame.Rect(x2 * BLOCK_SIZE, y2 * BLOCK_SIZE , BLOCK_SIZE, BLOCK_SIZE))
-
-			if block == "P":
-				pygame.draw.rect(screen, GREEN, pygame.Rect(x2 * BLOCK_SIZE, y2 * BLOCK_SIZE , BLOCK_SIZE, BLOCK_SIZE))
-
-				pass
-
-			if block == "0":
-				pass
-			x2 += 1
-
-		y2 += 1 #  #
-
+	for block in current_block_list:
+		pygame.draw.rect(screen, GREEN,pygame.Rect(block[0] * BLOCK_SIZE, block[1] * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+	for placed_block in block1:
+		pygame.draw.rect(screen, GREEN, pygame.Rect(placed_block[0] * BLOCK_SIZE, placed_block[1] * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 	current_tick += dt * game_speed
 
 	# --- Go ahead and update the screen with what we've drawn.
