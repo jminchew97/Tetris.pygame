@@ -66,6 +66,10 @@ rand = 0
 hero_iteration = 0
 pushing_down = False
 
+holding_move = False
+move_timer_max = 1
+move_current_time = 0
+move_speed = 15
 def create_map_grid(map_x, map_y):
 	map = []
 	for y in range(map_y_length):
@@ -95,7 +99,7 @@ def generate_piece(piece_list, current_piece):
 
 	current_p = ""
 	rand = random.randint(0, 6)
-	rand = 1
+	#rand = 1
 	current_block_list = []
 
 
@@ -103,48 +107,40 @@ def generate_piece(piece_list, current_piece):
 		rand = random.randint(0, 6)
 
 	if piece_list[rand] == "OR":
-		current_block_list.append([4, 0])
-		current_block_list.append([3, 0])
-
-		current_block_list.append([5, 0])
-
-
-		current_block_list.append([3, 1])
+		current_block_list.append([4, 0,"OR"])
+		current_block_list.append([3, 0,"OR"])
+		current_block_list.append([5, 0,"OR"])
+		current_block_list.append([3, 1,"OR"])
 	elif piece_list[rand] == "BR":
-		current_block_list.append([4, 0])
-		current_block_list.append([5, 0])
-
-
-		current_block_list.append([3, 0])
-		current_block_list.append([5, 1])
+		current_block_list.append([4, 0,"BR"])
+		current_block_list.append([5, 0,"BR"])
+		current_block_list.append([3, 0,"BR"])
+		current_block_list.append([5, 1,"BR"])
 	elif piece_list[rand] == "RZ":
-		current_block_list.append([4, 1])
-		current_block_list.append([4, 0])
-		current_block_list.append([5, 0])
-		current_block_list.append([3, 1])
+		current_block_list.append([4, 1,"RZ"])
+		current_block_list.append([4, 0,"RZ"])
+		current_block_list.append([5, 0,"RZ"])
+		current_block_list.append([3, 1,"RZ"])
 	elif piece_list[rand] == "CZ":
-		current_block_list.append([4, 1])
-		current_block_list.append([4, 0])
-		current_block_list.append([3, 0])
-
+		current_block_list.append([4, 1,"CZ"])
+		current_block_list.append([4, 0,"CZ"])
+		current_block_list.append([3, 0,"CZ"])
 		current_block_list.append([5, 1])
 	elif piece_list[rand] == "HR":
-		current_block_list.append([4, 1])
-		current_block_list.append([4, 0])
-
-		current_block_list.append([4, 2])
-		current_block_list.append([4, 3])
+		current_block_list.append([4, 1,"HR"])
+		current_block_list.append([4, 0,"HR"])
+		current_block_list.append([4, 2,"HR"])
+		current_block_list.append([4, 3,"HR"])
 	elif piece_list[rand] == "SB":
-		current_block_list.append([4, 0])
-		current_block_list.append([5, 0])
-		current_block_list.append([4, 1])
-		current_block_list.append([5, 1])
+		current_block_list.append([4, 0,"SB"])
+		current_block_list.append([5, 0,"SB"])
+		current_block_list.append([4, 1,"SB"])
+		current_block_list.append([5, 1,"SB"])
 	elif piece_list[rand] == "TW":
-		current_block_list.append([4, 1])
-		current_block_list.append([4, 0])
-
-		current_block_list.append([3, 1])
-		current_block_list.append([5, 1])
+		current_block_list.append([4, 1,"TW"])
+		current_block_list.append([4, 0,"TW"])
+		current_block_list.append([3, 1,"TW"])
+		current_block_list.append([5, 1,"TW"])
 	return current_block_list, piece_list[rand]
 
 def get_corners(center):
@@ -396,7 +392,7 @@ while not done:
 	dt = clock.tick(FPS) / 1000
 
 	# Reset input
-	move_x_axis = 0
+
 	# INPUT---------------------------
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
@@ -404,10 +400,12 @@ while not done:
 		if event.type == pygame.KEYDOWN:
 			if event.key == pygame.K_RIGHT:
 				move_x_axis = 1
-
+				holding_move = True
+				move(current_block_list, map, move_x_axis)
 			elif event.key == pygame.K_LEFT:
 				move_x_axis = -1
-
+				holding_move = True
+				move(current_block_list, map, move_x_axis)
 			if event.key == pygame.K_SPACE:
 				debug()
 			if event.key == pygame.K_DOWN:
@@ -420,12 +418,20 @@ while not done:
 			if event.key == pygame.K_DOWN:
 				tick = normal_tick
 				pushing_down = False
-
+			if event.key == pygame.K_LEFT:
+				holding_move = False
+				move_x_axis = 0
+				move_current_time = 0
+			if event.key == pygame.K_RIGHT:
+				holding_move = False
+				move_x_axis = 0
+				move_current_time = 0
 
 	# check if a move was attempted --------------------
-	if move_x_axis != 0:
+	if move_x_axis != 0 and holding_move and move_current_time >= move_timer_max:
 		# if move attempted, detect collisions to specified side
 		move(current_block_list, map,move_x_axis)
+		move_current_time = 0
 
 	# --- Game logic should go here
 
@@ -496,7 +502,8 @@ while not done:
 	for placed_block in block1:
 		pygame.draw.rect(screen, GREEN, pygame.Rect(placed_block[0] * BLOCK_SIZE, placed_block[1] * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 	current_tick += dt * game_speed
-
+	if holding_move:
+		move_current_time += dt * move_speed
 	# --- Go ahead and update the screen with what we've drawn.
 	pygame.display.flip()
 
