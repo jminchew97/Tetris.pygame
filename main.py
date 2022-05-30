@@ -1,6 +1,6 @@
 import pygame
 import random
-
+from operator import itemgetter
 # Define some colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -15,7 +15,7 @@ screen = pygame.display.set_mode(size)
 FPS = 60
 
 BLOCK_SIZE = 40
-pygame.display.set_caption("My Game")
+
 
 # Loop until the user clicks the close button.
 done = False
@@ -95,7 +95,7 @@ def generate_piece(piece_list, current_piece):
 
 	current_p = ""
 	rand = random.randint(0, 6)
-
+	rand = 1
 	current_block_list = []
 
 
@@ -161,6 +161,9 @@ def rotate_piece(current_piece):
 	smash_rotation = False
 	global current_block_list
 	global hero_iteration
+	previous_hero_iteration = hero_iteration
+	wall_bounce = False
+	templist = current_block_list.copy()
 
 	if current_piece == "OR":
 		normal_rotation = True
@@ -180,67 +183,107 @@ def rotate_piece(current_piece):
 	# rotate normal pieces
 	topleft_corner, topright_corner, bottomright_corner, bottomleft_corner = get_corners(current_block_list[0])
 	if normal_rotation:
-
 		x = 0
 		while x != 2:
 			for i in range(1, len(current_block_list)):
-
 				# move all corners
-				if current_block_list[i] == topleft_corner: # move right on x axis
-					current_block_list[i] = [current_block_list[i][0] + 1, current_block_list[i][1] ]  #changed code here
-				elif current_block_list[i] == topright_corner:
-					current_block_list[i] = [current_block_list[i][0], current_block_list[i][1] + 1] # move down on y axis
-				elif current_block_list[i] == bottomright_corner:
-					current_block_list[i] = [current_block_list[i][0] - 1, current_block_list[i][1]] # move left axis
-				elif current_block_list[i] == bottomleft_corner :
-					current_block_list[i] = [current_block_list[i][0], current_block_list[i][1] - 1]# move up on y axis
+				if templist[i] == topleft_corner: # move right on x axis
+					#templist.append([current_block_list[i][0] + 1, current_block_list[i][1]])
+					templist[i] = [templist[i][0] + 1, templist[i][1] ]  #changed code here
+				elif templist[i] == topright_corner:
+					#templist.append([current_block_list[i][0], current_block_list[i][1] + 1])
+					templist[i] = [templist[i][0], templist[i][1] + 1] # move down on y axis
+				elif templist[i] == bottomright_corner:
+					#templist.append([current_block_list[i][0] - 1, current_block_list[i][1]])
+					templist[i] = [templist[i][0] - 1, templist[i][1]] # move left axis
+				elif templist[i] == bottomleft_corner :
+					#templist.append([current_block_list[i][0], current_block_list[i][1] - 1])
+					templist[i] = [templist[i][0], templist[i][1] - 1]# move up on y axis
 
 				# move others
-				elif current_block_list[i] == [current_block_list[0][0] - 1, current_block_list[0][1]] : # left of center, move it up
-					current_block_list[i] = [current_block_list[i][0], current_block_list[i][1] - 1]
-				elif current_block_list[i] == [current_block_list[0][0], current_block_list[0][1] -1] : # above center, move right
-					current_block_list[i] = [current_block_list[i][0] + 1, current_block_list[i][1]]
-				elif current_block_list[i] == [current_block_list[0][0] + 1, current_block_list[0][1]] : # right of center, move down
-					current_block_list[i] = [current_block_list[i][0], current_block_list[i][1] + 1]
-				elif current_block_list[i] == [current_block_list[0][0] , current_block_list[0][1] + 1] : # below center, move left
-					current_block_list[i] = [current_block_list[i][0] - 1, current_block_list[i][1]]
-
+				elif templist[i] == [templist[0][0] - 1, templist[0][1]] : # left of center, move it up
+					#templist.append([current_block_list[i][0], current_block_list[i][1] - 1])
+					templist[i] = [templist[i][0], templist[i][1] - 1]
+				elif templist[i] == [templist[0][0], templist[0][1] -1] : # above center, move right
+					templist[i] = [templist[i][0] + 1, templist[i][1]]
+					#templist.append([current_block_list[i][0] + 1, current_block_list[i][1]])
+				elif templist[i] == [templist[0][0] + 1, current_block_list[0][1]] : # right of center, move down
+					templist[i] = [templist[i][0], templist[i][1] + 1]
+					#templist.append([current_block_list[i][0], current_block_list[i][1] + 1])
+				elif templist[i] == [templist[0][0] , templist[0][1] + 1] : # below center, move left
+					templist[i] = [templist[i][0] - 1, templist[i][1]]
+					#templist.append([current_block_list[i][0] - 1, current_block_list[i][1]])
 			x += 1
 	if hero_rotation:
-		print(hero_iteration)
 		templist = []
+		print(current_block_list)
 		if hero_iteration == 0:
-			current_block_list[0] = [current_block_list[0][0] + 1, current_block_list[0][1] ] # move right
-			templist.append(current_block_list[0])
-			templist.append([current_block_list[0][0] + 1, current_block_list[0][1]])
-			templist.append([current_block_list[0][0] -1, current_block_list[0][1]])
-			templist.append([current_block_list[0][0] - 2, current_block_list[0][1]])
+			#current_block_list[0] = [current_block_list[0][0] + 1, current_block_list[0][1] ] # move right
+			templist.append([current_block_list[0][0] + 1, current_block_list[0][1] ])
+			templist.append([current_block_list[0][0] + 2, current_block_list[0][1]]) #
+			templist.append([templist[0][0] -1, templist[0][1]])
+			templist.append([templist[0][0] - 2, templist[0][1]])
 			hero_iteration += 1
 
 		elif hero_iteration == 1:
-			current_block_list[0] = [current_block_list[0][0], current_block_list[0][1] + 1] # move down
-			templist.append(current_block_list[0])
+			#current_block_list[0] = [current_block_list[0][0], current_block_list[0][1] + 1] # move down
 			templist.append([current_block_list[0][0], current_block_list[0][1] + 1])
-			templist.append([current_block_list[0][0], current_block_list[0][1] - 1])
-			templist.append([current_block_list[0][0], current_block_list[0][1] - 2])
+			templist.append([current_block_list[0][0], current_block_list[0][1] + 2])
+			templist.append([templist[0][0], templist[0][1] - 1])
+			templist.append([templist[0][0], templist[0][1] - 2])
 			hero_iteration += 1
 		elif hero_iteration == 2:
-			current_block_list[0] = [current_block_list[0][0] - 1, current_block_list[0][1]] # move left
-			templist.append(current_block_list[0])
+			#current_block_list[0] = [current_block_list[0][0] - 1, current_block_list[0][1]] # move left
 			templist.append([current_block_list[0][0] - 1, current_block_list[0][1]])
-			templist.append([current_block_list[0][0] + 1, current_block_list[0][1]])
-			templist.append([current_block_list[0][0]  + 2, current_block_list[0][1]])
+			templist.append([current_block_list[0][0] - 2, current_block_list[0][1]])
+			templist.append([templist[0][0] + 1, templist[0][1]])
+			templist.append([templist[0][0]  + 2, templist[0][1]])
 			hero_iteration += 1
 		elif hero_iteration == 3:
-			current_block_list[0] = [current_block_list[0][0], current_block_list[0][1] - 1]# move up
-			templist.append(current_block_list[0])
-			templist.append([current_block_list[0][0], current_block_list[0][1] -1])
-			templist.append([current_block_list[0][0], current_block_list[0][1] +1])
-			templist.append([current_block_list[0][0], current_block_list[0][1] +2])
+			#current_block_list[0] = [current_block_list[0][0], current_block_list[0][1] - 1]# move up
+			templist.append([current_block_list[0][0], current_block_list[0][1] - 1])
+			templist.append([current_block_list[0][0], current_block_list[0][1] -2])
+			templist.append([templist[0][0], templist[0][1] +1])
+			templist.append([templist[0][0], templist[0][1] +2])
 			hero_iteration = 0
 
-		current_block_list = templist
+	# check if any rotated block overlaps with a placed block, if so, exit function cancel rotation
+	for i in range(len(templist)):
+		if templist[i] in block1:
+			return
+	# check if any of the current coordinates of the rotated piece are out of bounds
+	wall_check = templist.copy()
+	wall_check.sort()
 
+
+	x_diff = 0
+	y_diff = 0
+	# check both sides of x axis for wall kick
+	if wall_check[0][0] < 0:
+
+		x_diff = wall_check[0][0] * -1
+		wall_bounce = True
+	if wall_check[-1][0] > map_x_length - 1:
+		x_diff = wall_check[-1][0] - (map_x_length - 1)
+		x_diff = x_diff * -1
+		wall_bounce = True
+
+	# sorts based on y positions
+	wall_check.sort( key=itemgetter(1))
+	if wall_check[-1][1] > map_y_length - 1:
+		y_diff = wall_check[-1][1] - (map_y_length - 1)
+		y_diff = y_diff * -1
+		print(wall_check)
+		wall_bounce = True
+	if wall_bounce:
+
+		# add all offsets
+		for i in range(len(templist)):
+			templist[i][0] += x_diff
+			templist[i][1] += y_diff
+	# set rotated piece
+	print(templist)
+	current_block_list = templist
 def check_for_tetris():
 
 	clear_y_axis = []
@@ -339,6 +382,7 @@ hit_rotate_key = False
 # -------- Main Program Loop -----------
 map = create_map_grid(map_x_length, map_y_length)
 while not done:
+
 	#---- Start runs the first frame
 
 	# set initial blocks
@@ -370,6 +414,7 @@ while not done:
 				pushing_down = True
 				tick = fast_tick
 			if event.key == pygame.K_UP:
+				print("got rotation key")
 				rotate_piece(current_piece)
 		if event.type == pygame.KEYUP:
 			if event.key == pygame.K_DOWN:
