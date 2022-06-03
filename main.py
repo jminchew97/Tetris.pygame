@@ -3,14 +3,20 @@ import random
 from operator import itemgetter
 # Define some colors
 BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
+OR_color = (255,166,0)
+HR_color = (68,255,255)
+BR_color = (0,0,255)
+TW_color = (171,0,255)
+SB_color = (255,255,0)
+RZ_color = (0, 255, 0)
+CZ_color = (255, 0, 0)
 
 pygame.init()
-
+pygame.display.set_caption('Juli-ETRIS')
 # Set the width and height of the screen [width, height]
-size = (400, 800)
+# 400/800
+size = (800, 800)
+offset = 200
 screen = pygame.display.set_mode(size)
 FPS = 60
 
@@ -70,6 +76,9 @@ holding_move = False
 move_timer_max = 1
 move_current_time = 0
 move_speed = 15
+
+score = 0
+add_score = 0
 def create_map_grid(map_x, map_y):
 	map = []
 	for y in range(map_y_length):
@@ -107,40 +116,40 @@ def generate_piece(piece_list, current_piece):
 		rand = random.randint(0, 6)
 
 	if piece_list[rand] == "OR":
-		current_block_list.append([4, 0,"OR"])
-		current_block_list.append([3, 0,"OR"])
-		current_block_list.append([5, 0,"OR"])
-		current_block_list.append([3, 1,"OR"])
+		current_block_list.append([4, 0, "OR"])
+		current_block_list.append([3, 0, "OR"])
+		current_block_list.append([5, 0, "OR"])
+		current_block_list.append([3, 1, "OR"])
 	elif piece_list[rand] == "BR":
-		current_block_list.append([4, 0,"BR"])
-		current_block_list.append([5, 0,"BR"])
-		current_block_list.append([3, 0,"BR"])
-		current_block_list.append([5, 1,"BR"])
+		current_block_list.append([4, 0, "BR"])
+		current_block_list.append([5, 0, "BR"])
+		current_block_list.append([3, 0, "BR"])
+		current_block_list.append([5, 1, "BR"])
 	elif piece_list[rand] == "RZ":
-		current_block_list.append([4, 1,"RZ"])
-		current_block_list.append([4, 0,"RZ"])
-		current_block_list.append([5, 0,"RZ"])
-		current_block_list.append([3, 1,"RZ"])
+		current_block_list.append([4, 1, "RZ"])
+		current_block_list.append([4, 0, "RZ"])
+		current_block_list.append([5, 0, "RZ"])
+		current_block_list.append([3, 1, "RZ"])
 	elif piece_list[rand] == "CZ":
-		current_block_list.append([4, 1,"CZ"])
-		current_block_list.append([4, 0,"CZ"])
-		current_block_list.append([3, 0,"CZ"])
-		current_block_list.append([5, 1])
+		current_block_list.append([4, 1, "CZ"])
+		current_block_list.append([4, 0, "CZ"])
+		current_block_list.append([3, 0, "CZ"])
+		current_block_list.append([5, 1, "CZ"])
 	elif piece_list[rand] == "HR":
-		current_block_list.append([4, 1,"HR"])
-		current_block_list.append([4, 0,"HR"])
-		current_block_list.append([4, 2,"HR"])
-		current_block_list.append([4, 3,"HR"])
+		current_block_list.append([4, 1, "HR"])
+		current_block_list.append([4, 0, "HR"])
+		current_block_list.append([4, 2, "HR"])
+		current_block_list.append([4, 3, "HR"])
 	elif piece_list[rand] == "SB":
-		current_block_list.append([4, 0,"SB"])
-		current_block_list.append([5, 0,"SB"])
-		current_block_list.append([4, 1,"SB"])
-		current_block_list.append([5, 1,"SB"])
+		current_block_list.append([4, 0, "SB"])
+		current_block_list.append([5, 0, "SB"])
+		current_block_list.append([4, 1, "SB"])
+		current_block_list.append([5, 1, "SB"])
 	elif piece_list[rand] == "TW":
-		current_block_list.append([4, 1,"TW"])
-		current_block_list.append([4, 0,"TW"])
-		current_block_list.append([3, 1,"TW"])
-		current_block_list.append([5, 1,"TW"])
+		current_block_list.append([4, 1, "TW"])
+		current_block_list.append([4, 0, "TW"])
+		current_block_list.append([3, 1, "TW"])
+		current_block_list.append([5, 1, "TW"])
 	return current_block_list, piece_list[rand]
 
 def get_corners(center):
@@ -212,7 +221,7 @@ def rotate_piece(current_piece):
 			x += 1
 	if hero_rotation:
 		templist = []
-		print(current_block_list)
+
 		if hero_iteration == 0:
 			#current_block_list[0] = [current_block_list[0][0] + 1, current_block_list[0][1] ] # move right
 			templist.append([current_block_list[0][0] + 1, current_block_list[0][1] ])
@@ -245,8 +254,10 @@ def rotate_piece(current_piece):
 
 	# check if any rotated block overlaps with a placed block, if so, exit function cancel rotation
 	for i in range(len(templist)):
-		if templist[i] in block1:
-			return
+		for b in range(len(block1)):
+			if templist[i][0] == block1[b][0] and templist[i][1] == block1[b][1]:
+				print("collision")
+				return
 	# check if any of the current coordinates of the rotated piece are out of bounds
 	wall_check = templist.copy()
 	wall_check.sort()
@@ -269,7 +280,7 @@ def rotate_piece(current_piece):
 	if wall_check[-1][1] > map_y_length - 1:
 		y_diff = wall_check[-1][1] - (map_y_length - 1)
 		y_diff = y_diff * -1
-		print(wall_check)
+
 		wall_bounce = True
 	if wall_bounce:
 
@@ -278,7 +289,7 @@ def rotate_piece(current_piece):
 			templist[i][0] += x_diff
 			templist[i][1] += y_diff
 	# set rotated piece
-	print(templist)
+
 	current_block_list = templist
 def check_for_tetris():
 
@@ -311,15 +322,22 @@ def check_for_tetris():
 
 
 	if has_cleared_lines:
-
-		print(lines_cleared)
+		global add_score
+		if lines_cleared ==  1:
+			add_score += 40
+		elif lines_cleared == 2:
+			add_score += 100
+		elif lines_cleared == 3:
+			add_score += 300
+		elif lines_cleared == 4:
+			add_score+= 1200
 		 # all y axis that were cleared, stored as ints
 		new_placed_list = []
 
 		# get rid of any y axis duplicated in new list
 		for i in range(len(block1)):
 			if block1[i][1] in clear_y_axis:
-				print("Duplicate")
+				pass
 			else:
 				new_placed_list.append(block1[i]) # add blocks that are remaining after clearing to a new list
 		block1 = new_placed_list # reset block list to the new list
@@ -364,6 +382,21 @@ def update_map(map, current_block_list):
 		map[block1[i][1]][block1[i][0]] = "P"
 
 	update_placed_blocks = False
+def get_block_color(name):
+	if name == "OR":
+		return OR_color
+	elif name == "BR":
+		return BR_color
+	elif name == "RZ":
+		return RZ_color
+	elif name == "CZ":
+		return CZ_color
+	elif name == "HR":
+		return HR_color
+	elif name == "SB":
+		return SB_color
+	elif name == "TW":
+		return TW_color
 
 def debug():
 
@@ -375,10 +408,16 @@ def debug():
 		f.write("Move X Axis:" + str(move_x_axis))
 
 hit_rotate_key = False
+font = pygame.font.Font('freesansbold.ttf', 32)
+score_text = font.render('SCORE:', True, (255,255,255), (200,200,200))
+
+scoreRect = score_text.get_rect()
+
 # -------- Main Program Loop -----------
 map = create_map_grid(map_x_length, map_y_length)
 while not done:
-
+	score_num_text = font.render(str(score), True, (255, 255, 255), (200, 200, 200))
+	score_num_rect = score_num_text.get_rect()
 	#---- Start runs the first frame
 
 	# set initial blocks
@@ -412,7 +451,6 @@ while not done:
 				pushing_down = True
 				tick = fast_tick
 			if event.key == pygame.K_UP:
-				print("got rotation key")
 				rotate_piece(current_piece)
 		if event.type == pygame.KEYUP:
 			if event.key == pygame.K_DOWN:
@@ -437,7 +475,10 @@ while not done:
 
 	# move blocks DOWN
 	if current_tick >= tick:
-
+		if pushing_down:
+			add_score += 2
+		else:
+			add_score +=1
 
 
 		current_tick = 0
@@ -464,7 +505,7 @@ while not done:
 
 
 				map[current_block_list[i][1]][current_block_list[i][0]] = "P"
-				block1.append([current_block_list[i][0] ,current_block_list[i][1] ])
+				block1.append([current_block_list[i][0] ,current_block_list[i][1], current_piece])
 			collision = False
 			currently_has_block = False
 
@@ -480,7 +521,8 @@ while not done:
 				map[current_block_list[i][1]][current_block_list[i][0]] = "#"
 	# update map list
 	update_map(map, current_block_list)
-
+	score += add_score
+	add_score = 0
 
 
 
@@ -498,10 +540,24 @@ while not done:
 	#  ---Draw blocks onto screen
 
 	for block in current_block_list:
-		pygame.draw.rect(screen, GREEN,pygame.Rect(block[0] * BLOCK_SIZE, block[1] * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+
+		pygame.draw.rect(screen, get_block_color(current_piece),pygame.Rect(block[0] * BLOCK_SIZE + offset, block[1] * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 	for placed_block in block1:
-		pygame.draw.rect(screen, GREEN, pygame.Rect(placed_block[0] * BLOCK_SIZE, placed_block[1] * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+		pygame.draw.rect(screen, get_block_color(placed_block[2]), pygame.Rect(placed_block[0] * BLOCK_SIZE + offset, placed_block[1] * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+	for i in range(20):
+		pygame.draw.line(screen, (0, 0, 0), [offset, i *BLOCK_SIZE], [600, i*BLOCK_SIZE], 2)
+	for i in range(10):
+		pygame.draw.line(screen, (0, 0, 0), [offset + i * BLOCK_SIZE, 0 ], [offset + i * BLOCK_SIZE, 800 ],2 )
+	pygame.draw.line(screen, (201, 201, 201), [offset,0], [BLOCK_SIZE * 20, 0], 3)
+	pygame.draw.line(screen, (201, 201, 201), [offset, 800], [600,800 ], 3)
+	pygame.draw.line(screen, (201, 201, 201), [offset, 0], [offset, 800], 3)
+	pygame.draw.line(screen, (201, 201, 201), [600 - 1, 0], [600 - 1, 800], 3)
+
+	screen.blit(score_text, scoreRect)
+	score_num_rect.y += 40
+	screen.blit(score_num_text, score_num_rect)
 	current_tick += dt * game_speed
+
 	if holding_move:
 		move_current_time += dt * move_speed
 	# --- Go ahead and update the screen with what we've drawn.
