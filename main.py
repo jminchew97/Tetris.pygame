@@ -1,6 +1,8 @@
 import pygame
 import random
+import pickle
 from operator import itemgetter
+
 # Define some colors
 BLACK = (0, 0, 0)
 OR_color = (255,166,0)
@@ -38,12 +40,7 @@ map_y_length = 20
 
 # player movement
 block1 = []
-block2 = []
-block3 = []
-block4 = []
-block5 = []
-block6 = []
-block7 = []
+
 
 update_placed_blocks = False
 current_block_list = []
@@ -57,7 +54,7 @@ normal_tick =  5
 fast_tick = 1
 tick = normal_tick
 
-game_speed = 20
+game_speed = 15
 current_tick = 0
 
 start = 0
@@ -69,6 +66,7 @@ current_piece = ""
 is_first_piece = True
 rand = 0
 
+
 hero_iteration = 0
 pushing_down = False
 
@@ -79,6 +77,14 @@ move_speed = 15
 
 score = 0
 add_score = 0
+
+end_game = False
+
+total_lines = 0
+current_line_counter = 0
+score_list = []
+HIGHSCORE = 0
+level = 1
 def create_map_grid(map_x, map_y):
 	map = []
 	for y in range(map_y_length):
@@ -87,7 +93,6 @@ def create_map_grid(map_x, map_y):
 		for x in range(map_x_length):
 			map[y].append("0")
 	return map
-
 
 def move(moving_block_list, map, move_x_axis):
 	for i in range(len(moving_block_list)):
@@ -103,9 +108,8 @@ def move(moving_block_list, map, move_x_axis):
 	for i in range(len(moving_block_list)):
 		moving_block_list[i] = [moving_block_list[i][0] + move_x_axis, moving_block_list[i][1]]
 
-
 def generate_piece(piece_list, current_piece):
-
+	global end_game
 	current_p = ""
 	rand = random.randint(0, 6)
 	#rand = 1
@@ -150,6 +154,16 @@ def generate_piece(piece_list, current_piece):
 		current_block_list.append([4, 0, "TW"])
 		current_block_list.append([3, 1, "TW"])
 		current_block_list.append([5, 1, "TW"])
+
+	for i in range(len(current_block_list)):
+		for x in range(len(block1)):
+			if current_block_list[i][0] == block1[x][0] and current_block_list[i][1] == block1[x][1]:
+				end_game = True
+				print(end_game)
+	'''
+	for i in range(len(current_block_list)):
+		for x in range(len(block1))
+	'''
 	return current_block_list, piece_list[rand]
 
 def get_corners(center):
@@ -291,6 +305,7 @@ def rotate_piece(current_piece):
 	# set rotated piece
 
 	current_block_list = templist
+
 def check_for_tetris():
 
 	clear_y_axis = []
@@ -323,6 +338,16 @@ def check_for_tetris():
 
 	if has_cleared_lines:
 		global add_score
+		global total_lines
+		global current_line_counter
+		global level
+		global game_speed
+		global level_text
+		global total_lines_text
+		total_lines += len(clear_y_axis)
+
+		current_line_counter += lines_cleared
+		total_lines_text = font.render('LINES:{0}'.format(total_lines), True, (255, 255, 255))
 		if lines_cleared ==  1:
 			add_score += 40
 		elif lines_cleared == 2:
@@ -334,6 +359,16 @@ def check_for_tetris():
 		 # all y axis that were cleared, stored as ints
 		new_placed_list = []
 
+		# check if current_line_counter is above 10, if so level up and reset counter
+		if current_line_counter >= 10:
+			remainder = current_line_counter - 10
+			level +=1
+			current_line_counter = remainder
+			game_speed += 2
+			print("level up")
+			level_text = font.render('LEVEL:{0}'.format(level), True, (255,255,255))
+
+			print(total_lines)
 		# get rid of any y axis duplicated in new list
 		for i in range(len(block1)):
 			if block1[i][1] in clear_y_axis:
@@ -360,7 +395,6 @@ def check_for_tetris():
 
 		#
 
-
 def update_map(map, current_block_list):
 	global update_placed_blocks
 	# clear map
@@ -382,6 +416,7 @@ def update_map(map, current_block_list):
 		map[block1[i][1]][block1[i][0]] = "P"
 
 	update_placed_blocks = False
+
 def get_block_color(name):
 	if name == "OR":
 		return OR_color
@@ -407,18 +442,74 @@ def debug():
 			f.write("\n")
 		f.write("Move X Axis:" + str(move_x_axis))
 
+def endgame_screen():
+	pass
+
+def load_scores():
+	global score_list
+	global HIGHSCORE
+	try:
+		score_list = pickle.load(open("score_list.pickle", "rb"))
+		HIGHSCORE = score_list[-1]
+	except (OSError, IOError) as e:
+		score_list.append(0)
+		pickle.dump(score_list, open("score_list.pickle", "wb"))
+		print("created file")
+		print(score_list)
+
+def save_score():
+	if score not in score_list:
+		score_list.append(score)
+		print("new high score")
+	score_list.sort()
+	pickle.dump(score_list, open("score_list.pickle", "wb"))
+
+
+
 hit_rotate_key = False
-font = pygame.font.Font('freesansbold.ttf', 32)
-score_text = font.render('SCORE:', True, (255,255,255), (200,200,200))
+font = pygame.font.Font('slkscreb.ttf', 32)
+smaller_font = pygame.font.Font('slkscreb.ttf', 22)
+score_text = font.render('SCORE:', True, (255,255,255))
+level_text = font.render('LEVEL:{0}'.format(level), True, (255,255,255))
+total_lines_text = font.render('LINES:{0}'.format(total_lines), True, (255,255,255))
+highscore_text = smaller_font.render('HIGHSCORE:', True, (255,255,255))
+endgame_text = font.render('PRESS ANY KEY TO PLAY AGAIN', True, (255,255,255), (50,50,50))
 
 scoreRect = score_text.get_rect()
 
 # -------- Main Program Loop -----------
 map = create_map_grid(map_x_length, map_y_length)
+load_scores()
+highscore_text_num = smaller_font.render(str(HIGHSCORE), True, (255, 255, 255))
 while not done:
-	score_num_text = font.render(str(score), True, (255, 255, 255), (200, 200, 200))
+
+	score_num_text = font.render(str(score), True, (255, 255, 255))
 	score_num_rect = score_num_text.get_rect()
+
 	#---- Start runs the first frame
+
+	if end_game == True:
+
+		while end_game:
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					save_score()
+					done = True
+					end_game = False
+				if event.type == pygame.KEYDOWN:
+					save_score()
+					load_scores()
+					current_block_list = []
+					block1 = []
+					currently_has_block = False
+					score = 0
+					game_speed = 15
+					tick = normal_tick
+					end_game = False
+					pushing_down = False
+					highscore_text_num = smaller_font.render(str(HIGHSCORE), True, (255, 255, 255))
+
+
 
 	# set initial blocks
 	if currently_has_block == False: # generate new block
@@ -426,6 +517,7 @@ while not done:
 		current_block_list, current_piece = generate_piece(pieces, current_piece)
 
 		currently_has_block = True
+
 
 	# --- Main event loop
 	dt = clock.tick(FPS) / 1000
@@ -435,6 +527,7 @@ while not done:
 	# INPUT---------------------------
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
+			save_score()
 			done = True
 		if event.type == pygame.KEYDOWN:
 			if event.key == pygame.K_RIGHT:
@@ -553,9 +646,20 @@ while not done:
 	pygame.draw.line(screen, (201, 201, 201), [offset, 0], [offset, 800], 3)
 	pygame.draw.line(screen, (201, 201, 201), [600 - 1, 0], [600 - 1, 800], 3)
 
+	# handle TEXT
+	if end_game:
+		screen.blit(endgame_text, pygame.Rect(400 - (endgame_text.get_width() / 2) , 400, 60, 60))
+
 	screen.blit(score_text, scoreRect)
 	score_num_rect.y += 40
 	screen.blit(score_num_text, score_num_rect)
+	screen.blit(level_text, pygame.Rect(0, 80, 60, 60))
+	screen.blit(total_lines_text, pygame.Rect(0, 120, 60, 60))
+	screen.blit(highscore_text, pygame.Rect(0, 180, 60, 60))
+	screen.blit(highscore_text_num, pygame.Rect(0, 200, 60, 60))
+
+
+
 	current_tick += dt * game_speed
 
 	if holding_move:
