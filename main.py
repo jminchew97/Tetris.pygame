@@ -51,7 +51,7 @@ move_x_offset = 0
 # visuals
 
 normal_tick =  5
-fast_tick = 1
+fast_tick = .5
 tick = normal_tick
 
 game_speed = 15
@@ -73,7 +73,7 @@ pushing_down = False
 holding_move = False
 move_timer_max = 1
 move_current_time = 0
-move_speed = 15
+move_speed = 45
 
 score = 0
 add_score = 0
@@ -85,6 +85,10 @@ current_line_counter = 0
 score_list = []
 HIGHSCORE = 0
 level = 1
+
+fast_move_initiated = False
+holding_move_button_time = 0
+move_button_timer_max = .1
 def create_map_grid(map_x, map_y):
 	map = []
 	for y in range(map_y_length):
@@ -467,8 +471,11 @@ def save_score():
 
 
 hit_rotate_key = False
+
+# FONTS
 font = pygame.font.Font('slkscreb.ttf', 32)
 smaller_font = pygame.font.Font('slkscreb.ttf', 22)
+# FONT RENDERS
 score_text = font.render('SCORE:', True, (255,255,255))
 level_text = font.render('LEVEL:{0}'.format(level), True, (255,255,255))
 total_lines_text = font.render('LINES:{0}'.format(total_lines), True, (255,255,255))
@@ -481,6 +488,8 @@ scoreRect = score_text.get_rect()
 map = create_map_grid(map_x_length, map_y_length)
 load_scores()
 highscore_text_num = smaller_font.render(str(HIGHSCORE), True, (255, 255, 255))
+holding_L = False
+holding_R = False
 while not done:
 
 	score_num_text = font.render(str(score), True, (255, 255, 255))
@@ -531,13 +540,21 @@ while not done:
 			done = True
 		if event.type == pygame.KEYDOWN:
 			if event.key == pygame.K_RIGHT:
+				moving_right = True
+				holding_R = True
 				move_x_axis = 1
 				holding_move = True
-				move(current_block_list, map, move_x_axis)
+				move(current_block_list, map, 1)
+				fast_move_initiated = False
+				holding_move_button_time = 0
 			elif event.key == pygame.K_LEFT:
+				moving_left = True
 				move_x_axis = -1
+				holding_L = True
 				holding_move = True
-				move(current_block_list, map, move_x_axis)
+				fast_move_initiated = False
+				holding_move_button_time = 0
+				move(current_block_list, map, -1)
 			if event.key == pygame.K_SPACE:
 				debug()
 			if event.key == pygame.K_DOWN:
@@ -549,17 +566,41 @@ while not done:
 			if event.key == pygame.K_DOWN:
 				tick = normal_tick
 				pushing_down = False
-			if event.key == pygame.K_LEFT:
-				holding_move = False
-				move_x_axis = 0
-				move_current_time = 0
-			if event.key == pygame.K_RIGHT:
-				holding_move = False
-				move_x_axis = 0
-				move_current_time = 0
+			if event.key == pygame.K_LEFT and holding_R:
+				holding_L = False
+				move_x_axis = 1
+				holding_move_button_time = 0
+				fast_move_initiated = False
+			elif event.key == pygame.K_LEFT:
+				holding_L = False
+			if event.key == pygame.K_RIGHT and holding_L:
+				holding_R = False
+				move_x_axis = -1
+				holding_move_button_time = 0
+				fast_move_initiated = False
+			elif event.key == pygame.K_RIGHT:
+				holding_R = False
 
+	if holding_L:
+		#move_x_axis = -1
+		holding_move = True
+		holding_move_button_time += dt
+	elif holding_R:
+		#move_x_axis = 1
+		holding_move = True
+		holding_move_button_time += dt
+	else:
+		move_x_axis = 0
+		move_current_time = False
+		holding_move = False
+		holding_move_button_time = 0
+		fast_move_initiated = False
+	if holding_move_button_time >= move_button_timer_max:
+		holding_move_button_time = 0
+		fast_move_initiated = True
+	print("L:{0} - R:{1} - MoveTimer:{2} - HoldingMove:{3}".format(holding_L, holding_R, move_current_time, holding_move))
 	# check if a move was attempted --------------------
-	if move_x_axis != 0 and holding_move and move_current_time >= move_timer_max:
+	if move_x_axis != 0 and holding_move and move_current_time >= move_timer_max and fast_move_initiated:
 		# if move attempted, detect collisions to specified side
 		move(current_block_list, map,move_x_axis)
 		move_current_time = 0
@@ -662,7 +703,7 @@ while not done:
 
 	current_tick += dt * game_speed
 
-	if holding_move:
+	if holding_R or holding_L and fast_move_initiated:
 		move_current_time += dt * move_speed
 	# --- Go ahead and update the screen with what we've drawn.
 	pygame.display.flip()
