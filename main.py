@@ -169,10 +169,7 @@ def generate_piece(piece_list, current_piece):
 				pygame.mixer.Sound.play(death_sound)
 				pygame.mixer.music.stop()
 				print(end_game)
-	'''
-	for i in range(len(current_block_list)):
-		for x in range(len(block1))
-	'''
+
 	return current_block_list, piece_list[rand]
 
 def get_corners(center):
@@ -399,12 +396,6 @@ def check_for_tetris():
 				if block1[i][1]  < y:
 					block1[i][1] += 1
 
-		#for i in range(len(block1)): # moving all coordinates to correct spots after tetris
-
-		#	block1[i][1] = block1[i][1] + 1
-
-
-		#
 
 def update_map(map, current_block_list):
 	global update_placed_blocks
