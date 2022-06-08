@@ -1,1 +1,1 @@
-I am making Tetris from scratch using Pygame.
+I programmed Tetris kind of from scratch with the Pygame library.
