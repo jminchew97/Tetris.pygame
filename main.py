@@ -44,13 +44,15 @@ block1 = []
 
 update_placed_blocks = False
 current_block_list = []
+next_block_list = []
+next_piece_name = ""
 
 currently_has_block = False
 move_x_axis = 0
 move_x_offset = 0
 # visuals
 
-normal_tick =  5
+normal_tick = 5
 fast_tick = .5
 tick = normal_tick
 
@@ -64,6 +66,7 @@ collision = False
 pieces = ["OR", "HR", "BR", "TW", "CZ", "SB", "RZ"]
 current_piece = ""
 is_first_piece = True
+
 rand = 0
 
 
@@ -163,6 +166,8 @@ def generate_piece(piece_list, current_piece):
 		for x in range(len(block1)):
 			if current_block_list[i][0] == block1[x][0] and current_block_list[i][1] == block1[x][1]:
 				end_game = True
+				pygame.mixer.Sound.play(death_sound)
+				pygame.mixer.music.stop()
 				print(end_game)
 	'''
 	for i in range(len(current_block_list)):
@@ -341,6 +346,7 @@ def check_for_tetris():
 
 
 	if has_cleared_lines:
+		pygame.mixer.Sound.play(clear_lines_sound)
 		global add_score
 		global total_lines
 		global current_line_counter
@@ -350,7 +356,7 @@ def check_for_tetris():
 		global total_lines_text
 		total_lines += len(clear_y_axis)
 
-		current_line_counter += lines_cleared
+		current_line_counter += len(clear_y_axis)
 		total_lines_text = font.render('LINES:{0}'.format(total_lines), True, (255, 255, 255))
 		if lines_cleared ==  1:
 			add_score += 40
@@ -373,6 +379,7 @@ def check_for_tetris():
 			level_text = font.render('LEVEL:{0}'.format(level), True, (255,255,255))
 
 			print(total_lines)
+		print(current_line_counter)
 		# get rid of any y axis duplicated in new list
 		for i in range(len(block1)):
 			if block1[i][1] in clear_y_axis:
@@ -475,21 +482,34 @@ hit_rotate_key = False
 # FONTS
 font = pygame.font.Font('slkscreb.ttf', 32)
 smaller_font = pygame.font.Font('slkscreb.ttf', 22)
+medium_font = pygame.font.Font('slkscreb.ttf', 26)
 # FONT RENDERS
 score_text = font.render('SCORE:', True, (255,255,255))
-level_text = font.render('LEVEL:{0}'.format(level), True, (255,255,255))
-total_lines_text = font.render('LINES:{0}'.format(total_lines), True, (255,255,255))
+level_text = medium_font.render('LEVEL:{0}'.format(level), True, (255,255,255))
+total_lines_text = medium_font.render('LINES:{0}'.format(total_lines), True, (255,255,255))
+next_piece_text = smaller_font.render('NEXT PIECE'.format(total_lines), True, (255,255,255))
 highscore_text = smaller_font.render('HIGHSCORE:', True, (255,255,255))
 endgame_text = font.render('PRESS ANY KEY TO PLAY AGAIN', True, (255,255,255), (50,50,50))
 
 scoreRect = score_text.get_rect()
 
+# load sounds/music
+place_sound = pygame.mixer.Sound("click.wav")
+death_sound = pygame.mixer.Sound("explosion.wav")
+clear_lines_sound = pygame.mixer.Sound("clear_lines.wav")
+pygame.mixer.music.load('tetris_song.wav')
 # -------- Main Program Loop -----------
+pygame.mixer.music.set_volume(.2)
+pygame.mixer.music.play(-1)
 map = create_map_grid(map_x_length, map_y_length)
 load_scores()
 highscore_text_num = smaller_font.render(str(HIGHSCORE), True, (255, 255, 255))
 holding_L = False
 holding_R = False
+
+current_block_list, current_piece = generate_piece(pieces, current_piece)
+next_block_list, next_piece_name = generate_piece(pieces, current_piece)
+currently_has_block = True
 while not done:
 
 	score_num_text = font.render(str(score), True, (255, 255, 255))
@@ -510,7 +530,10 @@ while not done:
 					load_scores()
 					current_block_list = []
 					block1 = []
-					currently_has_block = False
+					currently_has_block = True
+					pygame.mixer.music.play(-1)
+					current_block_list, current_piece = generate_piece(pieces, current_piece)
+					next_block_list, next_piece_name = generate_piece(pieces, current_piece)
 					score = 0
 					game_speed = 15
 					tick = normal_tick
@@ -523,7 +546,9 @@ while not done:
 	# set initial blocks
 	if currently_has_block == False: # generate new block
 
-		current_block_list, current_piece = generate_piece(pieces, current_piece)
+		current_block_list, current_piece = next_block_list, next_piece_name
+		next_block_list, next_piece_name = generate_piece(pieces, current_piece)
+
 
 		currently_has_block = True
 
@@ -598,7 +623,7 @@ while not done:
 	if holding_move_button_time >= move_button_timer_max:
 		holding_move_button_time = 0
 		fast_move_initiated = True
-	print("L:{0} - R:{1} - MoveTimer:{2} - HoldingMove:{3}".format(holding_L, holding_R, move_current_time, holding_move))
+	#print("L:{0} - R:{1} - MoveTimer:{2} - HoldingMove:{3}".format(holding_L, holding_R, move_current_time, holding_move))
 	# check if a move was attempted --------------------
 	if move_x_axis != 0 and holding_move and move_current_time >= move_timer_max and fast_move_initiated:
 		# if move attempted, detect collisions to specified side
@@ -634,6 +659,7 @@ while not done:
 
 		# CHANGE BLOCK COORDS BASED ON COLLISION--------------------
 		if collision:
+			pygame.mixer.Sound.play(place_sound)
 			# CONVERT PLAYERS CURRENT BLOCK TO "PLACED"
 			for i in range(len(current_block_list)):
 
@@ -672,16 +698,25 @@ while not done:
 	# --- Drawing code should go here
 
 	#  ---Draw blocks onto screen
-
+	# draw current piece
 	for block in current_block_list:
 
 		pygame.draw.rect(screen, get_block_color(current_piece),pygame.Rect(block[0] * BLOCK_SIZE + offset, block[1] * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+	# draw placed blocks
 	for placed_block in block1:
 		pygame.draw.rect(screen, get_block_color(placed_block[2]), pygame.Rect(placed_block[0] * BLOCK_SIZE + offset, placed_block[1] * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+
+	# draw next block
+	for block in next_block_list:
+		pygame.draw.rect(screen, get_block_color(next_piece_name),
+		                 pygame.Rect(block[0] * BLOCK_SIZE + 525, block[1] * BLOCK_SIZE + 200, BLOCK_SIZE, BLOCK_SIZE))
+	# draw all game lines
 	for i in range(20):
 		pygame.draw.line(screen, (0, 0, 0), [offset, i *BLOCK_SIZE], [600, i*BLOCK_SIZE], 2)
 	for i in range(10):
 		pygame.draw.line(screen, (0, 0, 0), [offset + i * BLOCK_SIZE, 0 ], [offset + i * BLOCK_SIZE, 800 ],2 )
+
+
 	pygame.draw.line(screen, (201, 201, 201), [offset,0], [BLOCK_SIZE * 20, 0], 3)
 	pygame.draw.line(screen, (201, 201, 201), [offset, 800], [600,800 ], 3)
 	pygame.draw.line(screen, (201, 201, 201), [offset, 0], [offset, 800], 3)
@@ -694,10 +729,11 @@ while not done:
 	screen.blit(score_text, scoreRect)
 	score_num_rect.y += 40
 	screen.blit(score_num_text, score_num_rect)
-	screen.blit(level_text, pygame.Rect(0, 80, 60, 60))
-	screen.blit(total_lines_text, pygame.Rect(0, 120, 60, 60))
-	screen.blit(highscore_text, pygame.Rect(0, 180, 60, 60))
-	screen.blit(highscore_text_num, pygame.Rect(0, 200, 60, 60))
+	screen.blit(level_text, pygame.Rect(0, 100, 60, 60))
+	screen.blit(next_piece_text, pygame.Rect(605, 150, 60, 60))
+	screen.blit(total_lines_text, pygame.Rect(0, 160, 60, 60))
+	screen.blit(highscore_text, pygame.Rect(0, 260, 60, 60))
+	screen.blit(highscore_text_num, pygame.Rect(0, 280, 60, 60))
 
 
 
